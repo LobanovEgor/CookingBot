@@ -9,7 +9,7 @@ def create_database():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Users(
         id INTEGER PRIMARY KEY,
-        telegram_id INTEGER PRIMARY KEY,
+        telegram_id INTEGER,
         isAdmin BOOLEAN NOT NULL
         )
         ''')
@@ -18,7 +18,7 @@ def create_database():
         CREATE TABLE IF NOT EXISTS Food(
         id INTEGER PRIMARY KEY,
         name VARCHAR(256) UNIQUE NOT NULL,
-        text VARCHAR(256) NOT NULL
+        img VARCHAR(256) NOT NULL
         )
         ''')
 
@@ -42,22 +42,34 @@ def create_database():
         conn.commit()
 
 async def insert_user(telegram_id: int, isAdmin: bool):
-    with closing(sqlite3.connect('database.db')) as conn:
+    with closing(sqlite3.connect('database/database.db')) as conn:
         cursor = conn.cursor()
         cursor.execute('''INSERT OR IGNORE INTO Users (telegram_id, isAdmin) VALUES (?, ?)''', (telegram_id, isAdmin))
         conn.commit()
 
+async def change_admin(telegram_id: int):
+    with closing(sqlite3.connect('database/database.db')) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''UPDATE Users SET isAdmin = TRUE WHERE telegram_id= ?''', (telegram_id, ))
+        conn.commit()
+
+async def check_admin(telegram_id):
+    with closing(sqlite3.connect('database/database.db')) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''SELECT isAdmin FROM Users WHERE telegram_id= ?''', (telegram_id, ))
+        isAdmin = cursor.fetchone()[0]
+        return bool(isAdmin)
 
 async def insert_food(name, text):
-    with closing(sqlite3.connect('database.db')) as conn:
+    with closing(sqlite3.connect('database/database.db')) as conn:
         cursor = conn.cursor()
         cursor.execute('''
         INSERT OR IGNORE INTO Food(name, text) VALUES (?, ?)
         ''', (name, text))
-        conn.comit()
+        conn.commit()
 
 async def add_favorite(telegram_id, food_name):
-    with closing(sqlite3.connect('database.db')) as conn:
+    with closing(sqlite3.connect('database/database.db')) as conn:
         cursor = conn.cursor()
         cursor.execute('''
         SELECT id FROM Users WHERE telegram_id = ?
